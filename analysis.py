@@ -1,10 +1,7 @@
-from database import get_expenses
 from expenses import calculate_total_monthly
 
 
-def calculate_category_breakdown():
-    expenses = get_expenses()
-
+def calculate_category_breakdown(expenses):
     category_totals = {}
 
     for expense in expenses:
@@ -19,10 +16,14 @@ def calculate_category_breakdown():
     return category_totals
 
 
-def calculate_category_percentages():
-    category_totals = calculate_category_breakdown()
+def calculate_category_percentages(expenses):
+    category_totals = calculate_category_breakdown(
+        expenses
+    )
 
-    total = sum(category_totals.values())
+    total = sum(
+        category_totals.values()
+    )
 
     percentages = {}
 
@@ -30,19 +31,27 @@ def calculate_category_percentages():
         return percentages
 
     for category, amount in category_totals.items():
-        percentages[category] = (amount / total) * 100
+        percentages[category] = (
+            amount / total
+        ) * 100
 
     return percentages
 
 
-def build_financial_profile():
-    expenses = get_expenses()
+def build_financial_profile(expenses):
+    monthly_total = calculate_total_monthly(
+        expenses
+    )
 
-    monthly_total = calculate_total_monthly()
     yearly_total = monthly_total * 12
 
-    category_totals = calculate_category_breakdown()
-    category_percentages = calculate_category_percentages()
+    category_totals = calculate_category_breakdown(
+        expenses
+    )
+
+    category_percentages = calculate_category_percentages(
+        expenses
+    )
 
     largest_expense = None
 
@@ -63,4 +72,3 @@ def build_financial_profile():
     }
 
     return financial_profile
-

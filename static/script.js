@@ -1,148 +1,536 @@
-const form =
-    document.getElementById("expense-form");
-
-const submitButton =
-    document.getElementById("submit-button");
-
-const cancelEditButton =
-    document.getElementById("cancel-edit-button");
-
 const initialDataElement =
     document.getElementById("initial-data");
 
-const generateAIButton =
-    document.getElementById("generate-ai-button");
 
-const aiLoading =
-    document.getElementById("ai-loading");
-
-const aiResult =
-    document.getElementById("ai-result");
-
-const categorySort =
-    document.getElementById("category-sort");
+const isAuthenticated =
+    initialDataElement.dataset.authenticated === "true";
 
 
-window.initialCategoryTotals =
+const initialCategoryTotals =
     JSON.parse(
         initialDataElement.dataset.categoryTotals
     );
 
-window.initialCategoryPercentages =
+
+const initialCategoryPercentages =
     JSON.parse(
         initialDataElement.dataset.categoryPercentages
     );
 
 
-let editingExpenseId = null;
-
-let categoryChart = null;
-
-let currentCategoryTotals =
-    window.initialCategoryTotals;
-
-let currentCategoryPercentages =
-    window.initialCategoryPercentages;
-
-
 // --------------------------------
-// FORMAT MONEY
+// AUTHENTICATION
 // --------------------------------
 
-function formatMoney(value) {
+if (!isAuthenticated) {
 
-    return Number(value).toLocaleString(
-        "en-US",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+    const loginForm =
+        document.getElementById("login-form");
+
+    const signupForm =
+        document.getElementById("signup-form");
+
+    const loginMessage =
+        document.getElementById("login-message");
+
+    const signupMessage =
+        document.getElementById("signup-message");
+
+
+    // LOGIN
+
+    loginForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const email =
+                document.getElementById(
+                    "login-email"
+                ).value;
+
+
+            const password =
+                document.getElementById(
+                    "login-password"
+                ).value;
+
+
+            loginMessage.textContent =
+                "Logging in...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/login",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    loginMessage.textContent =
+                        data.error ||
+                        "Unable to log in.";
+
+                    return;
+                }
+
+
+                loginMessage.textContent =
+                    "Login successful.";
+
+
+                window.location.reload();
+
+            } catch (error) {
+
+                console.error(error);
+
+                loginMessage.textContent =
+                    "Unable to log in right now.";
+            }
+        }
+    );
+
+
+    // SIGNUP
+
+    signupForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const email =
+                document.getElementById(
+                    "signup-email"
+                ).value;
+
+
+            const password =
+                document.getElementById(
+                    "signup-password"
+                ).value;
+
+
+            signupMessage.textContent =
+                "Creating account...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/signup",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    signupMessage.textContent =
+                        data.error ||
+                        "Unable to create account.";
+
+                    return;
+                }
+
+
+                signupMessage.textContent =
+                    "Account created. You can now log in.";
+
+
+                signupForm.reset();
+
+            } catch (error) {
+
+                console.error(error);
+
+                signupMessage.textContent =
+                    "Unable to create account right now.";
+            }
         }
     );
 }
 
 
 // --------------------------------
-// INITIAL PAGE
+// LOGGED-IN APPLICATION
 // --------------------------------
 
-createCategoryChart(
-    window.initialCategoryTotals
-);
+if (isAuthenticated) {
 
-updateCategoryBreakdown(
-    window.initialCategoryTotals,
-    window.initialCategoryPercentages
-);
+    const form =
+        document.getElementById(
+            "expense-form"
+        );
+
+    const submitButton =
+        document.getElementById(
+            "submit-button"
+        );
+
+    const cancelEditButton =
+        document.getElementById(
+            "cancel-edit-button"
+        );
+
+    const categorySort =
+        document.getElementById(
+            "category-sort"
+        );
+
+    const generateAIButton =
+        document.getElementById(
+            "generate-ai-button"
+        );
+
+    const aiLoading =
+        document.getElementById(
+            "ai-loading"
+        );
+
+    const aiResult =
+        document.getElementById(
+            "ai-result"
+        );
+
+    const logoutButton =
+        document.getElementById(
+            "logout-button"
+        );
 
 
-// --------------------------------
-// CATEGORY SORT
-// --------------------------------
+    let editingExpenseId =
+        null;
 
-categorySort.addEventListener(
-    "change",
-    function () {
+    let categoryChart =
+        null;
 
-        updateCategoryBreakdown(
-            currentCategoryTotals,
-            currentCategoryPercentages
+    let currentCategoryTotals =
+        initialCategoryTotals;
+
+    let currentCategoryPercentages =
+        initialCategoryPercentages;
+
+
+    // --------------------------------
+    // FORMAT MONEY
+    // --------------------------------
+
+    function formatMoney(value) {
+
+        return Number(value).toLocaleString(
+            "en-US",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
         );
     }
-);
 
 
-// --------------------------------
-// ADD / UPDATE EXPENSE
-// --------------------------------
+    // --------------------------------
+    // INITIAL ANALYSIS
+    // --------------------------------
 
-form.addEventListener(
-    "submit",
-    async function (event) {
-
-        event.preventDefault();
-
-        const formData =
-            new FormData(form);
+    createCategoryChart(
+        initialCategoryTotals
+    );
 
 
-        const expenseData = {
-            name: formData.get("name"),
-            amount: formData.get("amount"),
-            frequency: formData.get("frequency"),
-            category: formData.get("category")
-        };
+    updateCategoryBreakdown(
+        initialCategoryTotals,
+        initialCategoryPercentages
+    );
 
 
-        let url =
-            "/add-expense";
-
-        let method =
-            "POST";
+    updateSavingsCard(
+        initialCategoryTotals
+    );
 
 
-        if (editingExpenseId !== null) {
+    // --------------------------------
+    // LOGOUT
+    // --------------------------------
 
-            url =
-                `/update-expense/${editingExpenseId}`;
+    logoutButton.addEventListener(
+        "click",
+        async function () {
 
-            method =
-                "PUT";
+            const response =
+                await fetch(
+                    "/logout",
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            if (response.ok) {
+
+                window.location.reload();
+
+            } else {
+
+                console.error(
+                    "Could not log out."
+                );
+            }
         }
+    );
 
+
+    // --------------------------------
+    // CATEGORY SORT
+    // --------------------------------
+
+    categorySort.addEventListener(
+        "change",
+        function () {
+
+            updateCategoryBreakdown(
+                currentCategoryTotals,
+                currentCategoryPercentages
+            );
+        }
+    );
+
+
+    // --------------------------------
+    // ADD / UPDATE EXPENSE
+    // --------------------------------
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const formData =
+                new FormData(form);
+
+
+            const expenseData = {
+
+                name:
+                    formData.get("name"),
+
+                amount:
+                    formData.get("amount"),
+
+                frequency:
+                    formData.get("frequency"),
+
+                category:
+                    formData.get("category")
+            };
+
+
+            let url =
+                "/add-expense";
+
+            let method =
+                "POST";
+
+
+            if (
+                editingExpenseId !== null
+            ) {
+
+                url =
+                    `/update-expense/${editingExpenseId}`;
+
+                method =
+                    "PUT";
+            }
+
+
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method: method,
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                expenseData
+                            )
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                console.error(
+                    "Could not save expense."
+                );
+
+                return;
+            }
+
+
+            const data =
+                await response.json();
+
+
+            updatePage(data);
+
+            resetForm();
+        }
+    );
+
+
+    // --------------------------------
+    // EDIT EXPENSE
+    // --------------------------------
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const editButton =
+                event.target.closest(
+                    ".edit-button"
+                );
+
+
+            if (!editButton) {
+                return;
+            }
+
+
+            editingExpenseId =
+                editButton.dataset.id;
+
+
+            document.getElementById(
+                "expense-name"
+            ).value =
+                editButton.dataset.name;
+
+
+            document.getElementById(
+                "expense-amount"
+            ).value =
+                editButton.dataset.amount;
+
+
+            document.getElementById(
+                "expense-frequency"
+            ).value =
+                editButton.dataset.frequency;
+
+
+            document.getElementById(
+                "expense-category"
+            ).value =
+                editButton.dataset.category;
+
+
+            submitButton.textContent =
+                "Save Changes";
+
+
+            cancelEditButton.classList.remove(
+                "hidden"
+            );
+        }
+    );
+
+
+    // --------------------------------
+    // CANCEL EDIT
+    // --------------------------------
+
+    cancelEditButton.addEventListener(
+        "click",
+        function () {
+
+            resetForm();
+        }
+    );
+
+
+    // --------------------------------
+    // DELETE EXPENSE
+    // --------------------------------
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const deleteButton =
+                event.target.closest(
+                    ".delete-button"
+                );
+
+
+            if (!deleteButton) {
+                return;
+            }
+
+
+            deleteExpense(
+                deleteButton.dataset.id
+            );
+        }
+    );
+
+
+    async function deleteExpense(
+        expenseId
+    ) {
 
         const response =
             await fetch(
-                url,
+                `/delete-expense/${expenseId}`,
                 {
-                    method: method,
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(expenseData)
+                    method: "DELETE"
                 }
             );
 
@@ -150,7 +538,7 @@ form.addEventListener(
         if (!response.ok) {
 
             console.error(
-                "Could not save expense"
+                "Could not delete expense."
             );
 
             return;
@@ -165,639 +553,549 @@ form.addEventListener(
 
         resetForm();
     }
-);
 
 
-// --------------------------------
-// EDIT EXPENSE
-// --------------------------------
+    // --------------------------------
+    // RESET FORM
+    // --------------------------------
 
-document.addEventListener(
-    "click",
-    function (event) {
+    function resetForm() {
 
-        const editButton =
-            event.target.closest(
-                ".edit-button"
-            );
-
-
-        if (!editButton) {
-            return;
-        }
-
+        form.reset();
 
         editingExpenseId =
-            editButton.dataset.id;
-
-
-        document.getElementById(
-            "expense-name"
-        ).value =
-            editButton.dataset.name;
-
-
-        document.getElementById(
-            "expense-amount"
-        ).value =
-            editButton.dataset.amount;
-
-
-        document.getElementById(
-            "expense-frequency"
-        ).value =
-            editButton.dataset.frequency;
-
-
-        document.getElementById(
-            "expense-category"
-        ).value =
-            editButton.dataset.category;
-
+            null;
 
         submitButton.textContent =
-            "Save Changes";
+            "Add Expense";
 
-
-        cancelEditButton.classList.remove(
+        cancelEditButton.classList.add(
             "hidden"
         );
     }
-);
 
 
-// --------------------------------
-// CANCEL EDIT
-// --------------------------------
+    // --------------------------------
+    // UPDATE PAGE
+    // --------------------------------
 
-cancelEditButton.addEventListener(
-    "click",
-    function () {
+    function updatePage(data) {
 
-        resetForm();
+        updateExpenseTable(
+            data.expenses
+        );
+
+        updateMetrics(data);
+
+        updateInsight(
+            data.largest_expense
+        );
+
+        updateAnalysis(
+            data.category_totals,
+            data.category_percentages
+        );
     }
-);
 
 
-// --------------------------------
-// DELETE EXPENSE
-// --------------------------------
+    // --------------------------------
+    // EXPENSE TABLE
+    // --------------------------------
 
-document.addEventListener(
-    "click",
-    function (event) {
+    function updateExpenseTable(
+        expenses
+    ) {
 
-        const deleteButton =
-            event.target.closest(
-                ".delete-button"
+        const tableBody =
+            document.getElementById(
+                "expense-table-body"
             );
 
 
-        if (!deleteButton) {
+        tableBody.innerHTML =
+            "";
+
+
+        if (
+            expenses.length === 0
+        ) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No recurring expenses added yet.
+                    </td>
+                </tr>
+            `;
+
             return;
         }
 
 
-        deleteExpense(
-            deleteButton.dataset.id
-        );
-    }
-);
+        expenses.forEach(
+            function (
+                expense,
+                index
+            ) {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
 
 
-async function deleteExpense(
-    expenseId
-) {
+                row.innerHTML = `
 
-    const response =
-        await fetch(
-            `/delete-expense/${expenseId}`,
-            {
-                method: "DELETE"
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td>
+                        ${expense.name}
+                    </td>
+
+                    <td>
+                        $${formatMoney(
+                            expense.amount
+                        )}
+                    </td>
+
+                    <td>
+                        ${expense.frequency}
+                    </td>
+
+                    <td>
+                        ${expense.category}
+                    </td>
+
+                    <td>
+                        $${formatMoney(
+                            expense.monthly_cost
+                        )}
+                    </td>
+
+                    <td class="action-buttons">
+
+                        <button
+                            type="button"
+                            class="edit-button"
+                            data-id="${expense.id}"
+                            data-name="${expense.name}"
+                            data-amount="${expense.amount}"
+                            data-frequency="${expense.frequency}"
+                            data-category="${expense.category}"
+                            title="Edit expense"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            type="button"
+                            class="delete-button"
+                            data-id="${expense.id}"
+                            title="Delete expense"
+                        >
+                            🗑
+                        </button>
+
+                    </td>
+                `;
+
+
+                tableBody.appendChild(
+                    row
+                );
             }
         );
-
-
-    if (!response.ok) {
-
-        console.error(
-            "Could not delete expense"
-        );
-
-        return;
     }
 
 
-    const data =
-        await response.json();
+    // --------------------------------
+    // METRICS
+    // --------------------------------
 
+    function updateMetrics(data) {
 
-    updatePage(data);
-
-    resetForm();
-}
-
-
-// --------------------------------
-// RESET FORM
-// --------------------------------
-
-function resetForm() {
-
-    form.reset();
-
-    editingExpenseId =
-        null;
-
-    submitButton.textContent =
-        "Add Expense";
-
-    cancelEditButton.classList.add(
-        "hidden"
-    );
-}
-
-
-// --------------------------------
-// UPDATE PAGE
-// --------------------------------
-
-function updatePage(data) {
-
-    updateExpenseTable(
-        data.expenses
-    );
-
-    updateMetrics(data);
-
-    updateInsight(
-        data.largest_expense
-    );
-
-    updateAnalysis(
-        data.category_totals,
-        data.category_percentages
-    );
-}
-
-
-// --------------------------------
-// EXPENSE TABLE
-// --------------------------------
-
-function updateExpenseTable(
-    expenses
-) {
-
-    const tableBody =
         document.getElementById(
-            "expense-table-body"
-        );
+            "monthly-total"
+        ).textContent =
+            `$${formatMoney(
+                data.total_monthly
+            )}`;
 
 
-    tableBody.innerHTML =
-        "";
+        document.getElementById(
+            "yearly-total"
+        ).textContent =
+            `$${formatMoney(
+                data.total_yearly
+            )}`;
 
 
-    if (expenses.length === 0) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    No recurring expenses added yet.
-                </td>
-            </tr>
-        `;
-
-        return;
+        document.getElementById(
+            "active-expenses"
+        ).textContent =
+            data.active_expenses;
     }
 
 
-    expenses.forEach(
-        function (
-            expense,
-            index
-        ) {
+    // --------------------------------
+    // QUICK INSIGHT
+    // --------------------------------
 
-            const row =
-                document.createElement(
-                    "tr"
-                );
+    function updateInsight(
+        largestExpense
+    ) {
+
+        const insightCard =
+            document.getElementById(
+                "insight-card"
+            );
 
 
-            row.innerHTML = `
+        if (largestExpense) {
 
-                <td>
-                    ${index + 1}
-                </td>
+            insightCard.innerHTML = `
 
-                <td>
-                    ${expense.name}
-                </td>
+                <p class="eyebrow">
+                    QUICK INSIGHT
+                </p>
 
-                <td>
+                <h3>
+                    Your largest recurring expense is
+
+                    <span>
+                        ${largestExpense.name}
+                    </span>.
+                </h3>
+
+                <p>
+                    It costs you approximately
+
                     $${formatMoney(
-                        expense.amount
+                        largestExpense.monthly_cost
                     )}
-                </td>
 
-                <td>
-                    ${expense.frequency}
-                </td>
-
-                <td>
-                    ${expense.category}
-                </td>
-
-                <td>
-                    $${formatMoney(
-                        expense.monthly_cost
-                    )}
-                </td>
-
-                <td class="action-buttons">
-
-                    <button
-                        type="button"
-                        class="edit-button"
-                        data-id="${expense.id}"
-                        data-name="${expense.name}"
-                        data-amount="${expense.amount}"
-                        data-frequency="${expense.frequency}"
-                        data-category="${expense.category}"
-                        title="Edit expense"
-                    >
-                        ✎
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="delete-button"
-                        data-id="${expense.id}"
-                        title="Delete expense"
-                    >
-                        🗑
-                    </button>
-
-                </td>
+                    per month.
+                </p>
             `;
 
+        } else {
 
-            tableBody.appendChild(
-                row
-            );
+            insightCard.innerHTML = `
+
+                <p class="eyebrow">
+                    QUICK INSIGHT
+                </p>
+
+                <h3>
+                    Add your first expense to see an insight.
+                </h3>
+
+                <p>
+                    Adisade will help you understand
+                    where your recurring money is going.
+                </p>
+            `;
         }
-    );
-}
-
-
-// --------------------------------
-// METRICS
-// --------------------------------
-
-function updateMetrics(
-    data
-) {
-
-    document.getElementById(
-        "monthly-total"
-    ).textContent =
-        `$${formatMoney(
-            data.total_monthly
-        )}`;
-
-
-    document.getElementById(
-        "yearly-total"
-    ).textContent =
-        `$${formatMoney(
-            data.total_yearly
-        )}`;
-
-
-    document.getElementById(
-        "active-expenses"
-    ).textContent =
-        data.active_expenses;
-}
-
-
-// --------------------------------
-// QUICK INSIGHT
-// --------------------------------
-
-function updateInsight(
-    largestExpense
-) {
-
-    const insightCard =
-        document.getElementById(
-            "insight-card"
-        );
-
-
-    if (largestExpense) {
-
-        insightCard.innerHTML = `
-
-            <p class="eyebrow">
-                QUICK INSIGHT
-            </p>
-
-            <h3>
-                Your largest recurring expense is
-
-                <span>
-                    ${largestExpense.name}
-                </span>.
-            </h3>
-
-            <p>
-                It costs you approximately
-
-                $${formatMoney(
-                    largestExpense.monthly_cost
-                )}
-
-                per month.
-            </p>
-        `;
-
-    } else {
-
-        insightCard.innerHTML = `
-
-            <p class="eyebrow">
-                QUICK INSIGHT
-            </p>
-
-            <h3>
-                Add your first expense
-                to see an insight.
-            </h3>
-
-            <p>
-                Adisade will help you understand
-                where your recurring money is going.
-            </p>
-        `;
     }
-}
 
 
-// --------------------------------
-// ANALYSIS
-// --------------------------------
+    // --------------------------------
+    // ANALYSIS
+    // --------------------------------
 
-function updateAnalysis(
-    categoryTotals,
-    categoryPercentages
-) {
+    function updateAnalysis(
+        totals,
+        percentages
+    ) {
 
-    currentCategoryTotals =
-        categoryTotals;
+        currentCategoryTotals =
+            totals;
 
-    currentCategoryPercentages =
-        categoryPercentages;
-
-
-    updateCategoryBreakdown(
-        categoryTotals,
-        categoryPercentages
-    );
-
-    createCategoryChart(
-        categoryTotals
-    );
-
-    updateSavingsCard(
-        categoryTotals
-    );
-}
+        currentCategoryPercentages =
+            percentages;
 
 
-// --------------------------------
-// CATEGORY BREAKDOWN + SORT
-// --------------------------------
-
-function updateCategoryBreakdown(
-    totals,
-    percentages
-) {
-
-    const container =
-        document.getElementById(
-            "category-breakdown"
+        updateCategoryBreakdown(
+            totals,
+            percentages
         );
 
 
-    container.innerHTML =
-        "";
-
-
-    let categories =
-        Object.keys(
+        createCategoryChart(
             totals
         );
 
 
-    if (categories.length === 0) {
-
-        container.innerHTML = `
-            <p>
-                Add expenses to see your spending breakdown.
-            </p>
-        `;
-
-        return;
+        updateSavingsCard(
+            totals
+        );
     }
 
 
-    const sortValue =
-        categorySort.value;
+    // --------------------------------
+    // CATEGORY BREAKDOWN
+    // --------------------------------
 
-
-    if (
-        sortValue ===
-        "low-to-high"
+    function updateCategoryBreakdown(
+        totals,
+        percentages
     ) {
 
-        categories.sort(
-            (a, b) =>
-                totals[a] -
-                totals[b]
-        );
-
-    } else {
-
-        categories.sort(
-            (a, b) =>
-                totals[b] -
-                totals[a]
-        );
-    }
+        const container =
+            document.getElementById(
+                "category-breakdown"
+            );
 
 
-    categories.forEach(
-        function (
-            category
+        container.innerHTML =
+            "";
+
+
+        let categories =
+            Object.keys(
+                totals
+            );
+
+
+        if (
+            categories.length === 0
         ) {
 
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "category-row";
-
-
-            row.innerHTML = `
-
-                <div>
-
-                    <strong>
-                        ${category}
-                    </strong>
-
-                    <span>
-                        ${Number(
-                            percentages[
-                                category
-                            ]
-                        ).toFixed(1)}%
-                    </span>
-
-                </div>
-
+            container.innerHTML = `
                 <p>
-                    $${formatMoney(
-                        totals[
-                            category
-                        ]
-                    )}/month
+                    Add expenses to see your spending breakdown.
                 </p>
             `;
 
+            return;
+        }
 
-            container.appendChild(
-                row
+
+        if (
+            categorySort.value ===
+            "low-to-high"
+        ) {
+
+            categories.sort(
+                (a, b) =>
+                    totals[a] -
+                    totals[b]
+            );
+
+        } else {
+
+            categories.sort(
+                (a, b) =>
+                    totals[b] -
+                    totals[a]
             );
         }
-    );
-}
 
 
-// --------------------------------
-// PIE CHART
-// --------------------------------
+        categories.forEach(
+            function (category) {
 
-function createCategoryChart(
-    categoryTotals
-) {
+                const row =
+                    document.createElement(
+                        "div"
+                    );
 
-    const canvas =
-        document.getElementById(
-            "category-chart"
+
+                row.className =
+                    "category-row";
+
+
+                row.innerHTML = `
+
+                    <div>
+
+                        <strong>
+                            ${category}
+                        </strong>
+
+                        <span>
+                            ${Number(
+                                percentages[
+                                    category
+                                ]
+                            ).toFixed(1)}%
+                        </span>
+
+                    </div>
+
+                    <p>
+                        $${formatMoney(
+                            totals[
+                                category
+                            ]
+                        )}/month
+                    </p>
+                `;
+
+
+                container.appendChild(
+                    row
+                );
+            }
         );
-
-
-    if (!canvas) {
-        return;
     }
 
 
-    const categories =
-        Object.keys(
-            categoryTotals
-        );
+    // --------------------------------
+    // PIE CHART
+    // --------------------------------
+
+    function createCategoryChart(
+        totals
+    ) {
+
+        const canvas =
+            document.getElementById(
+                "category-chart"
+            );
 
 
-    const amounts =
-        Object.values(
-            categoryTotals
-        );
+        if (!canvas) {
+            return;
+        }
 
 
-    if (categoryChart) {
+        const categories =
+            Object.keys(
+                totals
+            );
 
-        categoryChart.destroy();
+
+        const amounts =
+            Object.values(
+                totals
+            );
+
+
+        if (categoryChart) {
+
+            categoryChart.destroy();
+
+            categoryChart =
+                null;
+        }
+
+
+        if (
+            categories.length === 0
+        ) {
+
+            return;
+        }
+
 
         categoryChart =
-            null;
-    }
+            new Chart(
+                canvas,
+                {
+                    type: "pie",
 
+                    data: {
 
-    if (categories.length === 0) {
-        return;
-    }
+                        labels:
+                            categories,
 
+                        datasets: [
+                            {
+                                data:
+                                    amounts
+                            }
+                        ]
+                    },
 
-    categoryChart =
-        new Chart(
-            canvas,
-            {
-                type:
-                    "pie",
+                    options: {
 
-                data: {
+                        responsive:
+                            true,
 
-                    labels:
-                        categories,
+                        maintainAspectRatio:
+                            false,
 
-                    datasets: [
-                        {
-                            data:
-                                amounts
-                        }
-                    ]
-                },
+                        plugins: {
 
-                options: {
+                            legend: {
 
-                    responsive:
-                        true,
-
-                    maintainAspectRatio:
-                        false,
-
-                    plugins: {
-
-                        legend: {
-
-                            position:
-                                "bottom"
+                                position:
+                                    "bottom"
+                            }
                         }
                     }
                 }
+            );
+    }
+
+
+    // --------------------------------
+    // SAVINGS CARD
+    // --------------------------------
+
+    function updateSavingsCard(
+        totals
+    ) {
+
+        const card =
+            document.getElementById(
+                "savings-card"
+            );
+
+
+        const categories =
+            Object.keys(
+                totals
+            );
+
+
+        if (
+            categories.length === 0
+        ) {
+
+            card.innerHTML = `
+
+                <p class="eyebrow">
+                    SAVINGS OPPORTUNITY
+                </p>
+
+                <h3>
+                    Your savings opportunities
+                    will appear here.
+                </h3>
+
+                <p>
+                    Add recurring expenses so Adisade
+                    can begin analysing where your
+                    money is going.
+                </p>
+            `;
+
+            return;
+        }
+
+
+        let largestCategory =
+            categories[0];
+
+
+        categories.forEach(
+            function (category) {
+
+                if (
+                    totals[category] >
+                    totals[largestCategory]
+                ) {
+
+                    largestCategory =
+                        category;
+                }
             }
         );
-}
 
-
-// --------------------------------
-// SAVINGS CARD
-// --------------------------------
-
-function updateSavingsCard(
-    categoryTotals
-) {
-
-    const card =
-        document.getElementById(
-            "savings-card"
-        );
-
-
-    const categories =
-        Object.keys(
-            categoryTotals
-        );
-
-
-    if (categories.length === 0) {
 
         card.innerHTML = `
 
@@ -806,155 +1104,102 @@ function updateSavingsCard(
             </p>
 
             <h3>
-                Your savings opportunities
-                will appear here.
+                A good place to review is
+
+                <span>
+                    ${largestCategory}
+                </span>.
             </h3>
 
             <p>
-                Add recurring expenses so Adisade
-                can begin analysing where your
-                money is going.
+                You currently spend approximately
+
+                $${formatMoney(
+                    totals[
+                        largestCategory
+                    ]
+                )}
+
+                per month in this category.
+
+                Reviewing the expenses inside it
+                may reveal opportunities to reduce
+                recurring costs.
             </p>
         `;
-
-        return;
     }
 
 
-    let largestCategory =
-        categories[0];
+    // --------------------------------
+    // AI ANALYSIS
+    // --------------------------------
 
+    generateAIButton.addEventListener(
+        "click",
+        async function () {
 
-    categories.forEach(
-        function (
-            category
-        ) {
+            generateAIButton.disabled =
+                true;
 
-            if (
-                categoryTotals[
-                    category
-                ] >
-                categoryTotals[
-                    largestCategory
-                ]
-            ) {
+            generateAIButton.textContent =
+                "Analysing...";
 
-                largestCategory =
-                    category;
-            }
-        }
-    );
-
-
-    const amount =
-        categoryTotals[
-            largestCategory
-        ];
-
-
-    card.innerHTML = `
-
-        <p class="eyebrow">
-            SAVINGS OPPORTUNITY
-        </p>
-
-        <h3>
-            A good place to review is
-
-            <span>
-                ${largestCategory}
-            </span>.
-        </h3>
-
-        <p>
-            You currently spend approximately
-
-            $${formatMoney(
-                amount
-            )}
-
-            per month in this category.
-
-            Reviewing the expenses inside it
-            may reveal opportunities to reduce
-            recurring costs.
-        </p>
-    `;
-}
-
-
-// --------------------------------
-// AI ANALYSIS
-// --------------------------------
-
-generateAIButton.addEventListener(
-    "click",
-    async function () {
-
-        generateAIButton.disabled =
-            true;
-
-        generateAIButton.textContent =
-            "Analysing...";
-
-        aiLoading.classList.remove(
-            "hidden"
-        );
-
-        aiResult.innerHTML =
-            "";
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/ai-analysis",
-                    {
-                        method:
-                            "POST"
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "AI analysis failed"
-                );
-            }
-
-
-            const data =
-                await response.json();
-
-
-            aiResult.textContent =
-                data.recommendation;
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            aiResult.textContent =
-                "Unable to generate analysis right now.";
-
-        } finally {
-
-            aiLoading.classList.add(
+            aiLoading.classList.remove(
                 "hidden"
             );
 
+            aiResult.innerHTML =
+                "";
 
-            generateAIButton.disabled =
-                false;
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/ai-analysis",
+                        {
+                            method:
+                                "POST"
+                        }
+                    );
 
 
-            generateAIButton.textContent =
-                "Generate AI Analysis";
+                if (!response.ok) {
+
+                    throw new Error(
+                        "AI analysis failed"
+                    );
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                aiResult.textContent =
+                    data.recommendation;
+
+            } catch (error) {
+
+                console.error(error);
+
+                aiResult.textContent =
+                    "Unable to generate analysis right now.";
+
+            } finally {
+
+                aiLoading.classList.add(
+                    "hidden"
+                );
+
+
+                generateAIButton.disabled =
+                    false;
+
+
+                generateAIButton.textContent =
+                    "Generate AI Analysis";
+            }
         }
-    }
-);
+    );
+}

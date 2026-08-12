@@ -1,10 +1,20 @@
-from database import save_expenses, get_expenses
+from database import save_expenses
 
 
-def add_expense(name, amount, frequency, category):
-    monthly_cost = calculate_monthly(amount, frequency)
+def add_expense(
+    user_id,
+    name,
+    amount,
+    frequency,
+    category
+):
+    monthly_cost = calculate_monthly(
+        amount,
+        frequency
+    )
 
     save_expenses(
+        user_id,
         name,
         amount,
         frequency,
@@ -13,22 +23,27 @@ def add_expense(name, amount, frequency, category):
     )
 
 
-def calculate_monthly(amount, frequency):
+def calculate_monthly(
+    amount,
+    frequency
+):
     if frequency.lower() == "monthly":
         return amount
+
     elif frequency.lower() == "yearly":
-       return amount/12
+        return amount / 12
+
     elif frequency.lower() == "weekly":
-       return (amount*52)/12
+        return (amount * 52) / 12
+
     else:
         return None
 
 
-def calculate_total_monthly():
-    expenses = get_expenses()
-    
+def calculate_total_monthly(expenses):
     total = 0
+
     for expense in expenses:
         total += expense["monthly_cost"]
-    return total
 
+    return total

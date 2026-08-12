@@ -22,6 +22,8 @@
 
 <body>
 
+    <!-- NAVIGATION -->
+
     <nav>
 
         <div class="logo">
@@ -29,11 +31,39 @@
         </div>
 
         <div class="nav-links">
-            <a href="#home">Home</a>
-            <a href="#expenses">Expenses</a>
-            <a href="#metrics">Metrics</a>
-            <a href="#analysis">Analysis</a>
-            <a href="#ai-analysis">AI Analysis</a>
+
+            <a href="#home">
+                Home
+            </a>
+
+            {% if current_user.is_authenticated %}
+
+                <a href="#expenses">
+                    Expenses
+                </a>
+
+                <a href="#metrics">
+                    Metrics
+                </a>
+
+                <a href="#analysis">
+                    Analysis
+                </a>
+
+                <a href="#ai-analysis">
+                    AI Analysis
+                </a>
+
+                <button
+                    type="button"
+                    id="logout-button"
+                    class="logout-button"
+                >
+                    Logout
+                </button>
+
+            {% endif %}
+
         </div>
 
     </nav>
@@ -58,572 +88,715 @@
             </h1>
 
             <p class="hero-description">
-                Adisade brings your recurring expenses into one simple place,
-                helping you understand where your money goes every month.
+                Adisade helps you understand your recurring spending,
+                analyse where your money goes, and discover opportunities
+                to save.
             </p>
 
-            <a
-                href="#expenses"
-                class="primary-button"
-            >
-                Start tracking
-            </a>
+
+            {% if current_user.is_authenticated %}
+
+                <p class="welcome-message">
+                    Welcome back,
+                    <strong>
+                        {{ current_user.email }}
+                    </strong>
+                </p>
+
+                <a
+                    href="#expenses"
+                    class="primary-button"
+                >
+                    View your expenses
+                </a>
+
+            {% else %}
+
+                <a
+                    href="#auth"
+                    class="primary-button"
+                >
+                    Get started
+                </a>
+
+            {% endif %}
 
         </div>
 
     </section>
 
 
-    <!-- PAGE 2: EXPENSES -->
+    <!-- AUTH -->
 
-    <section
-        id="expenses"
-        class="page"
-    >
+    {% if not current_user.is_authenticated %}
 
-        <div class="content">
+        <section
+            id="auth"
+            class="page auth-page"
+        >
 
-            <div class="section-heading">
+            <div class="content">
 
-                <p class="eyebrow">
-                    YOUR EXPENSES
-                </p>
+                <div class="section-heading">
 
-                <h2>
-                    Recurring expenses
-                </h2>
+                    <p class="eyebrow">
+                        YOUR ACCOUNT
+                    </p>
 
-                <p>
-                    Add and manage everything you pay for repeatedly.
-                </p>
+                    <h2>
+                        Start using Adisade.
+                    </h2>
+
+                    <p>
+                        Create an account or log in to manage
+                        your personal recurring expenses.
+                    </p>
+
+                </div>
+
+
+                <div class="auth-grid">
+
+                    <!-- LOGIN -->
+
+                    <div class="auth-card">
+
+                        <h3>
+                            Log in
+                        </h3>
+
+                        <form id="login-form">
+
+                            <input
+                                type="email"
+                                id="login-email"
+                                placeholder="Email"
+                                required
+                            >
+
+                            <input
+                                type="password"
+                                id="login-password"
+                                placeholder="Password"
+                                required
+                            >
+
+                            <button
+                                type="submit"
+                                class="primary-button auth-button"
+                            >
+                                Log in
+                            </button>
+
+                        </form>
+
+                        <p
+                            id="login-message"
+                            class="auth-message"
+                        ></p>
+
+                    </div>
+
+
+                    <!-- SIGNUP -->
+
+                    <div class="auth-card">
+
+                        <h3>
+                            Create account
+                        </h3>
+
+                        <form id="signup-form">
+
+                            <input
+                                type="email"
+                                id="signup-email"
+                                placeholder="Email"
+                                required
+                            >
+
+                            <input
+                                type="password"
+                                id="signup-password"
+                                placeholder="Password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="submit"
+                                class="primary-button auth-button"
+                            >
+                                Create account
+                            </button>
+
+                        </form>
+
+                        <p
+                            id="signup-message"
+                            class="auth-message"
+                        ></p>
+
+                    </div>
+
+                </div>
 
             </div>
 
+        </section>
 
-            <form
-                class="expense-form"
-                id="expense-form"
-            >
+    {% endif %}
 
-                <input
-                    type="text"
-                    name="name"
-                    id="expense-name"
-                    placeholder="Expense name"
-                    required
+
+    {% if current_user.is_authenticated %}
+
+        <!-- PAGE 2: EXPENSES -->
+
+        <section
+            id="expenses"
+            class="page"
+        >
+
+            <div class="content">
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        YOUR EXPENSES
+                    </p>
+
+                    <h2>
+                        Recurring expenses
+                    </h2>
+
+                    <p>
+                        Add and manage everything you pay for repeatedly.
+                    </p>
+
+                </div>
+
+
+                <!-- EXPENSE FORM -->
+
+                <form
+                    class="expense-form"
+                    id="expense-form"
                 >
 
-
-                <input
-                    type="number"
-                    name="amount"
-                    id="expense-amount"
-                    placeholder="Amount"
-                    step="0.01"
-                    min="0.01"
-                    required
-                >
+                    <input
+                        type="text"
+                        name="name"
+                        id="expense-name"
+                        placeholder="Expense name"
+                        required
+                    >
 
 
-                <select
-                    name="frequency"
-                    id="expense-frequency"
-                    required
-                >
-
-                    <option value="Monthly">
-                        Monthly
-                    </option>
-
-                    <option value="Weekly">
-                        Weekly
-                    </option>
-
-                    <option value="Yearly">
-                        Yearly
-                    </option>
-
-                </select>
+                    <input
+                        type="number"
+                        name="amount"
+                        id="expense-amount"
+                        placeholder="Amount"
+                        step="0.01"
+                        min="0.01"
+                        required
+                    >
 
 
-                <input
-                    type="text"
-                    name="category"
-                    id="expense-category"
-                    placeholder="Category"
-                    required
-                >
+                    <select
+                        name="frequency"
+                        id="expense-frequency"
+                        required
+                    >
+
+                        <option value="Monthly">
+                            Monthly
+                        </option>
+
+                        <option value="Weekly">
+                            Weekly
+                        </option>
+
+                        <option value="Yearly">
+                            Yearly
+                        </option>
+
+                    </select>
+
+
+                    <!-- CATEGORY DROPDOWN -->
+
+                    <select
+                        name="category"
+                        id="expense-category"
+                        required
+                    >
+
+                        <option
+                            value=""
+                            disabled
+                            selected
+                        >
+                            Select category
+                        </option>
+
+                        <option value="Housing">
+                            Housing
+                        </option>
+
+                        <option value="Utilities">
+                            Utilities
+                        </option>
+
+                        <option value="Subscriptions">
+                            Subscriptions
+                        </option>
+
+                        <option value="Entertainment">
+                            Entertainment
+                        </option>
+
+                        <option value="Fitness">
+                            Fitness
+                        </option>
+
+                        <option value="Transportation">
+                            Transportation
+                        </option>
+
+                        <option value="Food & Dining">
+                            Food & Dining
+                        </option>
+
+                        <option value="Insurance">
+                            Insurance
+                        </option>
+
+                        <option value="Education">
+                            Education
+                        </option>
+
+                        <option value="Health">
+                            Health
+                        </option>
+
+                        <option value="Debt Payments">
+                            Debt Payments
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        type="submit"
+                        id="submit-button"
+                    >
+                        Add Expense
+                    </button>
+
+                </form>
 
 
                 <button
-                    type="submit"
-                    id="submit-button"
+                    type="button"
+                    id="cancel-edit-button"
+                    class="cancel-edit-button hidden"
                 >
-                    Add Expense
+                    Cancel Edit
                 </button>
 
-            </form>
+
+                <!-- TABLE -->
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>#</th>
+                                <th>Expense</th>
+                                <th>Amount</th>
+                                <th>Frequency</th>
+                                <th>Category</th>
+                                <th>Monthly Cost</th>
+                                <th></th>
+                            </tr>
+
+                        </thead>
 
 
-            <button
-                type="button"
-                id="cancel-edit-button"
-                class="cancel-edit-button hidden"
-            >
-                Cancel Edit
-            </button>
+                        <tbody id="expense-table-body">
+
+                            {% if expenses %}
+
+                                {% for expense in expenses %}
+
+                                    <tr>
+
+                                        <td>
+                                            {{ loop.index }}
+                                        </td>
+
+                                        <td>
+                                            {{ expense["name"] }}
+                                        </td>
+
+                                        <td>
+                                            ${{ "{:,.2f}".format(expense["amount"]) }}
+                                        </td>
+
+                                        <td>
+                                            {{ expense["frequency"] }}
+                                        </td>
+
+                                        <td>
+                                            {{ expense["category"] }}
+                                        </td>
+
+                                        <td>
+                                            ${{ "{:,.2f}".format(expense["monthly_cost"]) }}
+                                        </td>
 
 
-            <div class="table-container">
+                                        <td class="action-buttons">
 
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th>#</th>
-                            <th>Expense</th>
-                            <th>Amount</th>
-                            <th>Frequency</th>
-                            <th>Category</th>
-                            <th>Monthly Cost</th>
-                            <th></th>
-                        </tr>
-
-                    </thead>
+                                            <button
+                                                type="button"
+                                                class="edit-button"
+                                                data-id="{{ expense['id'] }}"
+                                                data-name="{{ expense['name'] }}"
+                                                data-amount="{{ expense['amount'] }}"
+                                                data-frequency="{{ expense['frequency'] }}"
+                                                data-category="{{ expense['category'] }}"
+                                                title="Edit expense"
+                                            >
+                                                ✎
+                                            </button>
 
 
-                    <tbody id="expense-table-body">
+                                            <button
+                                                type="button"
+                                                class="delete-button"
+                                                data-id="{{ expense['id'] }}"
+                                                title="Delete expense"
+                                            >
+                                                🗑
+                                            </button>
 
-                        {% if expenses %}
+                                        </td>
 
-                            {% for expense in expenses %}
+                                    </tr>
+
+                                {% endfor %}
+
+                            {% else %}
 
                                 <tr>
 
-                                    <td>
-                                        {{ loop.index }}
-                                    </td>
-
-                                    <td>
-                                        {{ expense["name"] }}
-                                    </td>
-
-                                    <td>
-                                        ${{ "{:,.2f}".format(expense["amount"]) }}
-                                    </td>
-
-                                    <td>
-                                        {{ expense["frequency"] }}
-                                    </td>
-
-                                    <td>
-                                        {{ expense["category"] }}
-                                    </td>
-
-                                    <td>
-                                        ${{ "{:,.2f}".format(expense["monthly_cost"]) }}
-                                    </td>
-
-                                    <td class="action-buttons">
-
-                                        <button
-                                            type="button"
-                                            class="edit-button"
-                                            data-id="{{ expense['id'] }}"
-                                            data-name="{{ expense['name'] }}"
-                                            data-amount="{{ expense['amount'] }}"
-                                            data-frequency="{{ expense['frequency'] }}"
-                                            data-category="{{ expense['category'] }}"
-                                            title="Edit expense"
-                                            aria-label="Edit expense"
-                                        >
-                                            ✎
-                                        </button>
-
-
-                                        <button
-                                            type="button"
-                                            class="delete-button"
-                                            data-id="{{ expense['id'] }}"
-                                            title="Delete expense"
-                                            aria-label="Delete expense"
-                                        >
-                                            🗑
-                                        </button>
-
+                                    <td colspan="7">
+                                        No recurring expenses added yet.
                                     </td>
 
                                 </tr>
 
-                            {% endfor %}
+                            {% endif %}
 
-                        {% else %}
+                        </tbody>
 
-                            <tr>
-                                <td colspan="7">
-                                    No recurring expenses added yet.
-                                </td>
-                            </tr>
-
-                        {% endif %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- PAGE 3: METRICS -->
-
-    <section
-        id="metrics"
-        class="page"
-    >
-
-        <div class="content">
-
-            <div class="section-heading">
-
-                <p class="eyebrow">
-                    YOUR MONEY
-                </p>
-
-                <h2>
-                    The bigger picture.
-                </h2>
-
-                <p>
-                    See what your recurring commitments actually cost you.
-                </p>
-
-            </div>
-
-
-            <div class="metrics">
-
-                <div class="metric-card">
-
-                    <p>
-                        Monthly recurring
-                    </p>
-
-                    <h3 id="monthly-total">
-                        ${{ "{:,.2f}".format(total_monthly) }}
-                    </h3>
-
-                </div>
-
-
-                <div class="metric-card">
-
-                    <p>
-                        Yearly recurring
-                    </p>
-
-                    <h3 id="yearly-total">
-                        ${{ "{:,.2f}".format(total_yearly) }}
-                    </h3>
-
-                </div>
-
-
-                <div class="metric-card">
-
-                    <p>
-                        Active expenses
-                    </p>
-
-                    <h3 id="active-expenses">
-                        {{ active_expenses }}
-                    </h3>
+                    </table>
 
                 </div>
 
             </div>
 
-
-            <div
-                class="insight-card"
-                id="insight-card"
-            >
-
-                <p class="eyebrow">
-                    QUICK INSIGHT
-                </p>
+        </section>
 
 
-                {% if largest_expense %}
+        <!-- PAGE 3: METRICS -->
 
-                    <h3>
-                        Your largest recurring expense is
+        <section
+            id="metrics"
+            class="page"
+        >
 
-                        <span>
-                            {{ largest_expense["name"] }}
-                        </span>.
-                    </h3>
+            <div class="content">
 
-                    <p>
-                        It costs you approximately
-                        ${{ "{:,.2f}".format(largest_expense["monthly_cost"]) }}
-                        per month.
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        YOUR MONEY
                     </p>
 
-                {% else %}
-
-                    <h3>
-                        Add your first expense to see an insight.
-                    </h3>
+                    <h2>
+                        The bigger picture.
+                    </h2>
 
                     <p>
-                        Adisade will help you understand where your recurring
-                        money is going.
+                        See what your recurring commitments actually cost you.
                     </p>
-
-                {% endif %}
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- PAGE 4: ANALYSIS -->
-
-    <section
-        id="analysis"
-        class="page analysis-page"
-    >
-
-        <div class="content">
-
-            <div class="section-heading">
-
-                <p class="eyebrow">
-                    SPENDING ANALYSIS
-                </p>
-
-                <h2>
-                    Where is your money going?
-                </h2>
-
-                <p>
-                    Understand how your recurring spending is distributed.
-                </p>
-
-            </div>
-
-
-            <div class="analysis-grid">
-
-                <div class="analysis-card chart-card">
-
-                    <h3>
-                        Spending by category
-                    </h3>
-
-                    <div class="chart-wrapper">
-
-                        <canvas id="category-chart"></canvas>
-
-                    </div>
 
                 </div>
 
 
-                <div class="analysis-card">
+                <div class="metrics">
 
-                    <div class="analysis-card-header">
+                    <div class="metric-card">
 
-                        <h3>
-                            Category breakdown
+                        <p>
+                            Monthly recurring
+                        </p>
+
+                        <h3 id="monthly-total">
+                            ${{ "{:,.2f}".format(total_monthly) }}
                         </h3>
 
+                    </div>
 
-                        <select
-                            id="category-sort"
-                            class="category-sort"
-                            aria-label="Sort categories"
-                        >
 
-                            <option value="high-to-low">
-                                Highest to Lowest
-                            </option>
+                    <div class="metric-card">
 
-                            <option value="low-to-high">
-                                Lowest to Highest
-                            </option>
+                        <p>
+                            Yearly recurring
+                        </p>
 
-                        </select>
+                        <h3 id="yearly-total">
+                            ${{ "{:,.2f}".format(total_yearly) }}
+                        </h3>
 
                     </div>
 
 
-                    <div id="category-breakdown">
+                    <div class="metric-card">
 
-                        {% if category_totals %}
+                        <p>
+                            Active expenses
+                        </p>
 
-                            {% for category, amount in category_totals.items() %}
-
-                                <div class="category-row">
-
-                                    <div>
-
-                                        <strong>
-                                            {{ category }}
-                                        </strong>
-
-                                        <span>
-                                            {{ "%.1f"|format(category_percentages[category]) }}%
-                                        </span>
-
-                                    </div>
-
-                                    <p>
-                                        ${{ "{:,.2f}".format(amount) }}/month
-                                    </p>
-
-                                </div>
-
-                            {% endfor %}
-
-                        {% else %}
-
-                            <p>
-                                Add expenses to see your spending breakdown.
-                            </p>
-
-                        {% endif %}
+                        <h3 id="active-expenses">
+                            {{ active_expenses }}
+                        </h3>
 
                     </div>
 
                 </div>
 
-            </div>
 
+                <div
+                    class="insight-card"
+                    id="insight-card"
+                >
 
-            <div
-                class="savings-card"
-                id="savings-card"
-            >
-
-                <p class="eyebrow">
-                    SAVINGS OPPORTUNITY
-                </p>
-
-                {% if category_totals %}
-
-                    {% set largest_category =
-                        category_totals |
-                        dictsort(false, 'value') |
-                        last
-                    %}
-
-                    <h3>
-                        A good place to review is
-
-                        <span>
-                            {{ largest_category[0] }}
-                        </span>.
-                    </h3>
-
-                    <p>
-                        You currently spend approximately
-                        ${{ "{:,.2f}".format(largest_category[1]) }}
-                        per month in this category.
-                        Reviewing the expenses inside it may reveal
-                        opportunities to reduce recurring costs.
+                    <p class="eyebrow">
+                        QUICK INSIGHT
                     </p>
 
-                {% else %}
+
+                    {% if largest_expense %}
+
+                        <h3>
+                            Your largest recurring expense is
+
+                            <span>
+                                {{ largest_expense["name"] }}
+                            </span>.
+                        </h3>
+
+                        <p>
+                            It costs you approximately
+                            ${{ "{:,.2f}".format(largest_expense["monthly_cost"]) }}
+                            per month.
+                        </p>
+
+                    {% else %}
+
+                        <h3>
+                            Add your first expense to see an insight.
+                        </h3>
+
+                        <p>
+                            Adisade will help you understand
+                            where your recurring money is going.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PAGE 4: ANALYSIS -->
+
+        <section
+            id="analysis"
+            class="page analysis-page"
+        >
+
+            <div class="content">
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        SPENDING ANALYSIS
+                    </p>
+
+                    <h2>
+                        Where is your money going?
+                    </h2>
+
+                    <p>
+                        Understand how your recurring spending is distributed.
+                    </p>
+
+                </div>
+
+
+                <div class="analysis-grid">
+
+                    <div class="analysis-card chart-card">
+
+                        <h3>
+                            Spending by category
+                        </h3>
+
+                        <div class="chart-wrapper">
+
+                            <canvas id="category-chart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-card">
+
+                        <div class="analysis-card-header">
+
+                            <h3>
+                                Category breakdown
+                            </h3>
+
+
+                            <select
+                                id="category-sort"
+                                class="category-sort"
+                            >
+
+                                <option value="high-to-low">
+                                    Highest to Lowest
+                                </option>
+
+                                <option value="low-to-high">
+                                    Lowest to Highest
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div id="category-breakdown"></div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="savings-card"
+                    id="savings-card"
+                >
+
+                    <p class="eyebrow">
+                        SAVINGS OPPORTUNITY
+                    </p>
 
                     <h3>
                         Your savings opportunities will appear here.
                     </h3>
 
-                    <p>
-                        Add recurring expenses so Adisade can begin analysing
-                        where your money is going.
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PAGE 5: AI ANALYSIS -->
+
+        <section
+            id="ai-analysis"
+            class="page ai-analysis-page"
+        >
+
+            <div class="content">
+
+                <div class="section-heading">
+
+                    <p class="eyebrow">
+                        AI ANALYSIS
                     </p>
 
-                {% endif %}
+                    <h2>
+                        What can you do better?
+                    </h2>
 
-            </div>
+                    <p>
+                        Let Adisade analyse your recurring spending
+                        and suggest practical areas to review.
+                    </p>
 
-        </div>
-
-    </section>
-
-
-    <!-- PAGE 5: AI ANALYSIS -->
-
-    <section
-        id="ai-analysis"
-        class="page ai-analysis-page"
-    >
-
-        <div class="content">
-
-            <div class="section-heading">
-
-                <p class="eyebrow">
-                    AI ANALYSIS
-                </p>
-
-                <h2>
-                    What can you do better?
-                </h2>
-
-                <p>
-                    Let Adisade analyse your recurring spending
-                    and suggest practical areas to review.
-                </p>
-
-            </div>
-
-
-            <div class="ai-card">
-
-                <button
-                    type="button"
-                    id="generate-ai-button"
-                    class="primary-button ai-button"
-                >
-                    Generate AI Analysis
-                </button>
-
-
-                <div
-                    id="ai-loading"
-                    class="ai-loading hidden"
-                >
-                    Analysing your recurring expenses...
                 </div>
 
 
-                <div
-                    id="ai-result"
-                    class="ai-result"
-                >
+                <div class="ai-card">
 
-                    <p>
-                        Your personalised AI analysis will appear here.
-                    </p>
+                    <button
+                        type="button"
+                        id="generate-ai-button"
+                        class="primary-button ai-button"
+                    >
+                        Generate AI Analysis
+                    </button>
+
+
+                    <div
+                        id="ai-loading"
+                        class="ai-loading hidden"
+                    >
+                        Analysing your recurring expenses...
+                    </div>
+
+
+                    <div
+                        id="ai-result"
+                        class="ai-result"
+                    >
+
+                        <p>
+                            Your personalised AI analysis will appear here.
+                        </p>
+
+                    </div>
 
                 </div>
 
             </div>
 
-        </div>
+        </section>
 
-    </section>
+    {% endif %}
 
+
+    <!-- FOOTER -->
 
     <footer>
 
@@ -638,8 +811,11 @@
     </footer>
 
 
+    <!-- INITIAL DATA -->
+
     <div
         id="initial-data"
+        data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}"
         data-category-totals='{{ category_totals | tojson }}'
         data-category-percentages='{{ category_percentages | tojson }}'
         hidden
